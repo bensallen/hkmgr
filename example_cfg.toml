@@ -1,0 +1,72 @@
+[network]
+
+[network.net1.vmnet]
+bridge = "bridge100"
+ip = "192.168.64.1/24"
+
+[network.net2.tap]
+bridge = "bridge1"
+ip = "192.168.99.1/24"
+
+[network.net3.tap]
+bridge = "bridge2"
+ip = "192.168.100.1/24"
+nat = true
+nat_if = "en0"
+pf_rules = [
+  "nat on en0 inet from 192.168.101.0/24 to any -> (en0)"
+]
+dhcp = true
+#dhcp_range =
+
+[vm.ros-vm1]
+memory = "4GB"
+cores = 2
+uuid = "03212F04-0DC6-48DF-BCE6-A43E396B2EDC"
+ssh_key = "~/.ssh/id_rsa"
+provision_pre = ""
+provision_post = ""
+check_for_ssh = true
+before = ["ros-vm2"]
+run_dir = ".run/vm/ros-vm1"
+
+[vm.ros-vm1.network.net2]
+ip = "192.168.99.11/24"
+mac = "AA:BB:CC:DD:00:01"
+
+[vm.ros-vm1.network]
+net1 = {}
+net3 = { ip = "192.168.100.11/24" }
+
+[vm.ros-vm1.boot.kexec]
+kernel = "vmlinuz"
+initrd = "initrd"
+cmdline = "console=tty0 console=ttyS0,115200"
+
+[[vm.ros-vm1.hdd]]
+path = "hdd1.qcow2"
+type = "qcow2"
+size = "32GB"
+create = true
+
+[[vm.ros-vm1.hdd]]
+path = "hdd2.qcow2"
+type = "qcow2"
+size = "32GB"
+create = true
+
+[[vm.ros-vm1.cdrom]]
+path = "disk.iso"
+extract = false
+
+[vm.ros-vm2]
+memory = "1GB"
+cores = 1
+after = ["ros-vm1"]
+requires = ["ros-vm1"]
+
+[vm.ros-vm2.network.net2]
+ip = "192.168.99.12/24"
+
+[vm.ros-vm2.boot.firmware]
+path = "UEFI.fd"
