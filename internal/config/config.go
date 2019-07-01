@@ -1,5 +1,7 @@
 package config
 
+import "fmt"
+
 type Config struct {
 	Network Network `toml:"network"`
 	VM      VM      `toml:"vm"`
@@ -50,10 +52,31 @@ type VMConfig struct {
 	CDROM         []CDROM            `toml:"cdrom"`
 }
 
+func (v *VMConfig) Cli() []string {
+	return v.Boot.Cli()
+}
+
 // Boot config
 type Boot struct {
 	Kexec    Kexec    `toml:"kexec"`
 	Firmware Firmware `toml:"firmware"`
+	FBSD     FBSD     `toml:"fbsd"`
+}
+
+func (b *Boot) Cli() []string {
+	if (Kexec{}) != b.Kexec {
+		return b.Kexec.Cli()
+	}
+
+	if (Firmware{}) != b.Firmware {
+		return b.Firmware.Cli()
+	}
+
+	if (FBSD{}) != b.FBSD {
+		return b.FBSD.Cli()
+	}
+
+	return []string{}
 }
 
 type Kexec struct {
@@ -62,8 +85,26 @@ type Kexec struct {
 	Cmdline string `toml:"cmdline"`
 }
 
+func (k *Kexec) Cli() []string {
+	return []string{"-f", fmt.Sprintf("kexec,%s,%s,%s", k.Kernel, k.Initrd, k.Cmdline)}
+}
+
 type Firmware struct {
 	Path string `toml:"path"`
+}
+
+func (f *Firmware) Cli() []string {
+	return []string{"-f", fmt.Sprintf("bootrom,%s,,", f.Path)}
+}
+
+type FBSD struct {
+	Userboot   string `toml:"userboot"`
+	BootVolume string `toml:"userboot"`
+	KernelEnv  string `toml:"kernelenv"`
+}
+
+func (f *FBSD) Cli() []string {
+	return []string{"-f", fmt.Sprintf("fbsd,%s,%s,%s", f.Userboot, f.BootVolume, f.KernelEnv)}
 }
 
 // VM Network Config
