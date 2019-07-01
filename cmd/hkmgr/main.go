@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/BurntSushi/toml"
+	"github.com/bensallen/hkmgr/internal/config"
 	"github.com/integrii/flaggy"
 	"github.com/kr/pretty"
 )
@@ -16,11 +17,15 @@ var destroySubcommand *flaggy.Subcommand
 var sshSubcommand *flaggy.Subcommand
 var consoleSubcommand *flaggy.Subcommand
 
+var configPath string
+
 func init() {
 	flaggy.SetName("hkmgr")
 	flaggy.SetDescription("VM manager for hyperkit")
 
 	flaggy.DefaultParser.AdditionalHelpPrepend = "http://github.com/bensallen/hkmgr"
+
+	flaggy.String(&configPath, "c", "config", "Path to configuration TOML file")
 
 	upSubcommand = flaggy.NewSubcommand("up")
 	upSubcommand.Description = "Start VMs"
@@ -43,15 +48,14 @@ func init() {
 	flaggy.AttachSubcommand(sshSubcommand, 1)
 	flaggy.AttachSubcommand(consoleSubcommand, 1)
 
-	// set the version and parse all inputs into variables
 	flaggy.SetVersion(version)
 	flaggy.Parse()
 }
 
 func main() {
 
-	var config Config
-	if _, err := toml.DecodeFile("example_cfg.toml", &config); err != nil {
+	var config config.Config
+	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		// handle error
 	}
 

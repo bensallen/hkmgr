@@ -1,4 +1,4 @@
-module hkmgr
+module github.com/bensallen/hkmgr
 
 go 1.12
 
