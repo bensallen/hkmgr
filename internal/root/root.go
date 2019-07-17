@@ -22,6 +22,7 @@ func Run() error {
 	var consoleSubcommand *flaggy.Subcommand
 
 	var configPath string
+	var debugOutput bool
 
 	flaggy.SetName("hkmgr")
 	flaggy.SetDescription("VM manager for hyperkit")
@@ -29,6 +30,7 @@ func Run() error {
 	flaggy.DefaultParser.AdditionalHelpPrepend = "http://github.com/bensallen/hkmgr"
 
 	flaggy.String(&configPath, "c", "config", "Path to configuration TOML file")
+	flaggy.Bool(&debugOutput, "d", "debug", "Enable debug output")
 
 	upSubcommand = flaggy.NewSubcommand("up")
 	upSubcommand.Description = "Start VMs"
@@ -64,7 +66,7 @@ func Run() error {
 	}
 
 	if upSubcommand.Used {
-		if err := up.Run(&config); err != nil {
+		if err := up.Run(&config, debugOutput); err != nil {
 			return err
 		}
 	} else if downSubcommand.Used {
