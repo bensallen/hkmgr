@@ -121,11 +121,11 @@ func (f *FBSD) Cli() []string {
 
 // VM Network Config
 type NetConf struct {
-	IP     string `toml:"ip"`
-	MAC    string `toml:"mac"`
-	Device string `toml:"device"`
-	Driver string `toml:"driver"`
-	Label  string `toml:"label"`
+	IP       string `toml:"ip"`
+	MAC      string `toml:"mac"`
+	Device   string `toml:"device"`
+	Driver   string `toml:"driver"`
+	MemberOf string `toml:"memberOf"`
 }
 
 type HDD struct {
