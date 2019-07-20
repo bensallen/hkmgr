@@ -1,6 +1,8 @@
 package root
 
 import (
+	"fmt"
+
 	"github.com/BurntSushi/toml"
 	"github.com/bensallen/hkmgr/internal/config"
 	"github.com/bensallen/hkmgr/internal/console"
@@ -9,6 +11,7 @@ import (
 	"github.com/bensallen/hkmgr/internal/ssh"
 	"github.com/bensallen/hkmgr/internal/up"
 	"github.com/integrii/flaggy"
+	"github.com/kr/pretty"
 )
 
 var version = "unknown"
@@ -22,7 +25,8 @@ func Run() error {
 	var consoleSubcommand *flaggy.Subcommand
 
 	var configPath string
-	var debugOutput bool
+	var debug bool
+	var dryRun bool
 
 	flaggy.SetName("hkmgr")
 	flaggy.SetDescription("VM manager for hyperkit")
@@ -30,7 +34,8 @@ func Run() error {
 	flaggy.DefaultParser.AdditionalHelpPrepend = "http://github.com/bensallen/hkmgr"
 
 	flaggy.String(&configPath, "c", "config", "Path to configuration TOML file")
-	flaggy.Bool(&debugOutput, "d", "debug", "Enable debug output")
+	flaggy.Bool(&debug, "d", "debug", "Enable debug output")
+	flaggy.Bool(&dryRun, "n", "dry-run", "Don't execute any commands that affect change, just show what will be run")
 
 	upSubcommand = flaggy.NewSubcommand("up")
 	upSubcommand.Description = "Start VMs"
@@ -60,13 +65,21 @@ func Run() error {
 	flaggy.SetVersion(version)
 	flaggy.Parse()
 
+	if dryRun {
+		debug = true
+	}
+
 	var config config.Config
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		return err
 	}
 
+	if debug {
+		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
+	}
+
 	if upSubcommand.Used {
-		if err := up.Run(&config, debugOutput); err != nil {
+		if err := up.Run(&config, debug, dryRun); err != nil {
 			return err
 		}
 	} else if downSubcommand.Used {
