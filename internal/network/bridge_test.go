@@ -1,6 +1,7 @@
 package network
 
 import (
+	"net"
 	"reflect"
 	"testing"
 )
@@ -22,7 +23,7 @@ func Test_parseIfconfig(t *testing.T) {
 			args: args{ifconfig: string(ifconfigOut)},
 			want: &Bridge{
 				Members: []string{"en3", "en1", "en2", "en4"},
-				IP:      "10.0.0.1",
+				IP:      net.ParseIP("10.0.0.1"),
 				Netmask: []byte{255, 255, 255, 0},
 			},
 		},

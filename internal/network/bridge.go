@@ -3,6 +3,7 @@ package network
 import (
 	"encoding/hex"
 	"fmt"
+	"net"
 	"os/exec"
 	"strings"
 )
@@ -10,8 +11,8 @@ import (
 //Bridge is a Darwin/BSD network bridge device
 type Bridge struct {
 	Device  string
-	IP      string
-	Netmask []byte
+	IP      net.IP
+	Netmask net.IPMask
 	Members []string
 }
 
@@ -32,7 +33,12 @@ func (b *Bridge) Up() error {
 			return err
 		}
 	} else {
-		if b.IP != bridge.IP {
+		if b.IP.String() != bridge.IP.String() {
+			if err := b.setIP(); err != nil {
+				return err
+			}
+		}
+		if b.Netmask.String() != bridge.Netmask.String() {
 			if err := b.setIP(); err != nil {
 				return err
 			}
@@ -72,7 +78,7 @@ func parseIfconfig(ifconfig string) *Bridge {
 			bridge.Members = append(bridge.Members, kv[1])
 		} else if strings.HasPrefix(line, "inet ") {
 			kv := strings.Split(line, " ")
-			bridge.IP = kv[1]
+			bridge.IP = net.ParseIP(kv[1])
 			netmaskHex := strings.TrimPrefix(kv[3], "0x")
 			bridge.Netmask, _ = hex.DecodeString(netmaskHex)
 		}
@@ -83,25 +89,29 @@ func parseIfconfig(ifconfig string) *Bridge {
 // create runs ifconfig bridge<N> create
 func (b *Bridge) create() error {
 	cmd := exec.Command("ifconfig", b.Device, "create")
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
 // Destroy runs ifconfig bridge<N> destroy
 func (b *Bridge) Destroy() error {
 	cmd := exec.Command("ifconfig", b.Device, "destroy")
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
 // setUp runs ifconfig bridge<N> up
 func (b *Bridge) setUp() error {
 	cmd := exec.Command("ifconfig", b.Device, "up")
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
 // setIP runs ifconfig bridge<N> <ipAddr> netmask <netmask>. Note, netmask is
 // passed in its hex form, eg. 0xffffff00. Similar to ifconfig's default output.
 func (b *Bridge) setIP() error {
-	cmd := exec.Command("ifconfig", b.Device, b.IP, "netmask", fmt.Sprintf("0x%x", b.Netmask))
+	cmd := exec.Command("ifconfig", b.Device, b.IP.String(), "netmask", fmt.Sprintf("0x%s", b.Netmask.String()))
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
