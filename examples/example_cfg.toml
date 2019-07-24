@@ -43,9 +43,9 @@ driver = "virtio-tap"
 memberOf = "net2"
 
 [vm.ros-vm1.boot.kexec]
-kernel = "vmlinuz"
-initrd = "initrd"
-cmdline = "console=tty0 console=ttyS0,115200"
+kernel = "examples/vmlinuz"
+initrd = "examples/initrd"
+cmdline = "console=tty0 console=ttyS0,115200 earlyprintk=serial rancher.autologin=ttyS0 rancher.network.interfaces.*.dhcp=false rancher.network.interfaces.eth0.address=192.168.99.11/24 rancher.network.interfaces.eth0.gateway=192.168.99.1"
 
 #[[vm.ros-vm1.hdd]]
 #path = "hdd1.qcow2"

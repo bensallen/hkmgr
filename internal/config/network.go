@@ -31,6 +31,7 @@ func (nt *NetTypes) NetType() NetType {
 }
 
 type NetType interface {
+	Discover() error
 	Up() error
 	Destroy() error
 }
@@ -38,6 +39,10 @@ type NetType interface {
 type Vmnet struct {
 	Bridge string `toml:"bridge"`
 	IP     string `toml:"ip"`
+}
+
+func (v *Vmnet) Discover() error {
+	return nil
 }
 
 func (v *Vmnet) Up() error {
@@ -49,25 +54,34 @@ func (v *Vmnet) Destroy() error {
 }
 
 type Tap struct {
-	Bridge  string   `toml:"bridge"`
-	IP      string   `toml:"ip"`
-	Nat     bool     `toml:"nat"`
-	NatIf   string   `toml:"nat_if"`
-	PfRules []string `toml:"pf_rules"`
-	DHCP    bool     `tool:"dhcp"`
+	Bridge    string   `toml:"bridge"`
+	IP        string   `toml:"ip"`
+	Nat       bool     `toml:"nat"`
+	NatIf     string   `toml:"nat_if"`
+	PfRules   []string `toml:"pf_rules"`
+	DHCP      bool     `toml:"dhcp"`
+	BridgeDev *network.Bridge
+}
+
+func (t *Tap) Discover() error {
+	if t.BridgeDev == nil {
+		err := t.toBridge()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *Tap) Up() error {
-
-	bridge, err := t.toBridge()
-	if err != nil {
+	if err := t.Discover(); err != nil {
 		return err
 	}
 
-	return bridge.Up()
+	return t.BridgeDev.Up()
 }
 
-func (t *Tap) toBridge() (*network.Bridge, error) {
+func (t *Tap) toBridge() error {
 	bridge := network.Bridge{}
 	if t.IP != "" {
 		var ip net.IP
@@ -77,13 +91,13 @@ func (t *Tap) toBridge() (*network.Bridge, error) {
 			var err error
 			ip, cidr, err = net.ParseCIDR(t.IP)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			mask = cidr.Mask
 		} else {
 			ip = net.ParseIP(t.IP)
 			if ip == nil {
-				return nil, fmt.Errorf("Could not parse IP address: %s", t.IP)
+				return fmt.Errorf("Could not parse IP address: %s", t.IP)
 			}
 			mask = ip.DefaultMask()
 		}
@@ -92,7 +106,9 @@ func (t *Tap) toBridge() (*network.Bridge, error) {
 		bridge = network.Bridge{Device: t.Bridge}
 	}
 
-	return &bridge, nil
+	t.BridgeDev = &bridge
+
+	return nil
 }
 
 func (t *Tap) Destroy() error {
@@ -100,6 +116,10 @@ func (t *Tap) Destroy() error {
 }
 
 type VPNKit struct {
+}
+
+func (v *VPNKit) Discover() error {
+	return nil
 }
 
 func (v *VPNKit) Up() error {

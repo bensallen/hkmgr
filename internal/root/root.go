@@ -78,6 +78,8 @@ func Run() error {
 		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
 	}
 
+	//os.Chdir(filepath.Dirname(configPath))
+
 	if upSubcommand.Used {
 		if err := up.Run(&config, debug, dryRun); err != nil {
 			return err

@@ -2,8 +2,16 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"strconv"
+	"strings"
+
+	"github.com/mitchellh/go-ps"
 )
+
+var hyperkitPath = "hyperkit"
 
 // VMs
 type VM map[string]VMConfig
@@ -23,6 +31,74 @@ type VMConfig struct {
 	Boot          Boot      `toml:"boot"`
 	HDD           []HDD     `toml:"hdd"`
 	CDROM         []CDROM   `toml:"cdrom"`
+}
+
+// Status is the status of a VM process
+type Status int
+
+const (
+	// Running status represents a running hyperkit process being found
+	Running Status = 1
+	// Stopped status represents that a pid file was found but a matching hyperkit process was not found
+	Stopped Status = 2
+	// NotFound status represents that a pid file was not found
+	NotFound Status = 3
+)
+
+// Up starts a VM if its not already running.
+func (v *VMConfig) Up() error {
+	if v.Status() == Running {
+		return nil
+	}
+
+	cmdArgs := v.Cli()
+
+	fmt.Printf("cmd: %s %s\n", hyperkitPath, strings.Join(cmdArgs, " "))
+
+	cmd := exec.Command(hyperkitPath, cmdArgs...)
+	err := cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	w, err := os.Create(v.RunDir + "/pid")
+	defer w.Close()
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.WriteString(strconv.Itoa(cmd.Process.Pid)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Status attempts to find the pid file in the run dir of a VM and checks to see if its running or not.
+func (v *VMConfig) Status() Status {
+	pidFile := v.RunDir + "/pid"
+	if _, err := os.Stat(pidFile); os.IsNotExist(err) {
+		return NotFound
+	}
+	pidTxt, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return NotFound
+	}
+
+	pid, err := strconv.Atoi(string(pidTxt))
+	if err != nil {
+		return NotFound
+	}
+
+	proc, err := ps.FindProcess(pid)
+	if err != nil {
+		return NotFound
+	}
+	if proc == nil {
+		return Stopped
+	} else {
+		return Running
+	}
 }
 
 func (v *VMConfig) Cli() []string {

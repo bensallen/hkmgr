@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 //Bridge is a Darwin/BSD network bridge device
@@ -139,13 +140,28 @@ func addMembers(device string, members []string) error {
 
 	args := []string{device}
 	for _, member := range members {
+
+		// Ugly polling and timeout mechanism waiting for the hyperkit to bring up the tap interface.
+		var count int
+		for {
+			if count > 10 {
+				return fmt.Errorf("failed to find device %s after 10 seconds, attempting to add it to bridge %s", member, device)
+			}
+			if _, err := net.InterfaceByName(member); err != nil {
+				time.Sleep(1 * time.Second)
+				count++
+				continue
+			}
+			break
+		}
 		args = append(args, "addm", member)
 	}
 	cmd := exec.Command("ifconfig", args...)
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
-// delMembers deletes member devices to a bridge device by running ifconfig bridge<N> delm <dev1> delm <dev2> ...
+// delMembers deletes member devices to a bridge device by running ifconfig bridge<N> deletem <dev1> deletem <dev2> ...
 func delMembers(device string, members []string) error {
 	if len(members) == 0 {
 		return nil
@@ -153,9 +169,10 @@ func delMembers(device string, members []string) error {
 
 	args := []string{device}
 	for _, member := range members {
-		args = append(args, "delm", member)
+		args = append(args, "deletem", member)
 	}
 	cmd := exec.Command("ifconfig", args...)
+	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
