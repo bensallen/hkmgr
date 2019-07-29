@@ -47,6 +47,9 @@ func (b *Bridge) Up() error {
 		if err := b.setMembers(bridge.Members); err != nil {
 			return err
 		}
+		if err := b.setUp(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -111,6 +114,9 @@ func (b *Bridge) setUp() error {
 // setIP runs ifconfig bridge<N> <ipAddr> netmask <netmask>. Note, netmask is
 // passed in its hex form, eg. 0xffffff00. Similar to ifconfig's default output.
 func (b *Bridge) setIP() error {
+	if b.IP == nil {
+		return nil
+	}
 	cmd := exec.Command("ifconfig", b.Device, b.IP.String(), "netmask", fmt.Sprintf("0x%s", b.Netmask.String()))
 	fmt.Printf("cmd: %s\n", strings.Join(cmd.Args, " "))
 	return cmd.Run()
