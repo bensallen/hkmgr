@@ -24,9 +24,10 @@ func Run() error {
 	var sshSubcommand *flaggy.Subcommand
 	var consoleSubcommand *flaggy.Subcommand
 
-	var configPath string
+	configPath := "hkmgr.toml"
 	var debug bool
 	var dryRun bool
+	var vmName string
 
 	flaggy.SetName("hkmgr")
 	flaggy.SetDescription("VM manager for hyperkit")
@@ -39,21 +40,27 @@ func Run() error {
 
 	upSubcommand = flaggy.NewSubcommand("up")
 	upSubcommand.Description = "Start VMs"
+	upSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be run")
 
 	downSubcommand = flaggy.NewSubcommand("down")
 	downSubcommand.Description = "Stop VMs"
+	downSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be stopped")
 
 	destroySubcommand = flaggy.NewSubcommand("destroy")
 	destroySubcommand.Description = "Destroy VMs"
+	destroySubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be destroyed!")
 
 	validateSubcommand = flaggy.NewSubcommand("validate")
 	validateSubcommand.Description = "Validate configuration"
+	validateSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM")
 
 	sshSubcommand = flaggy.NewSubcommand("ssh")
 	sshSubcommand.Description = "SSH to VM"
+	sshSubcommand.AddPositionalValue(&vmName, "name", 1, true, "Specify a VM")
 
 	consoleSubcommand = flaggy.NewSubcommand("console")
 	consoleSubcommand.Description = "Open Console of VM"
+	consoleSubcommand.AddPositionalValue(&vmName, "name", 1, true, "Specify a VM")
 
 	flaggy.AttachSubcommand(upSubcommand, 1)
 	flaggy.AttachSubcommand(downSubcommand, 1)
@@ -78,10 +85,8 @@ func Run() error {
 		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
 	}
 
-	//os.Chdir(filepath.Dirname(configPath))
-
 	if upSubcommand.Used {
-		if err := up.Run(&config, debug, dryRun); err != nil {
+		if err := up.Run(&config, vmName, debug, dryRun); err != nil {
 			return err
 		}
 	} else if downSubcommand.Used {
