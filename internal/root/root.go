@@ -2,6 +2,7 @@ package root
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/bensallen/hkmgr/internal/config"
@@ -74,6 +75,15 @@ func Run() error {
 
 	if dryRun {
 		debug = true
+	}
+
+	cfgStat, err := os.Stat(configPath)
+
+	if os.IsNotExist(err) {
+		return fmt.Errorf("configuration file %s not found", configPath)
+	}
+	if cfgStat.IsDir() {
+		return fmt.Errorf("configuration file %s is a directory", configPath)
 	}
 
 	var config config.Config
