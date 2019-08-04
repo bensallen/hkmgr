@@ -19,9 +19,10 @@ func Run(cfg *config.Config, vmName string, debug bool, dryRun bool) error {
 	if vmName != "" {
 		if vm, ok := cfg.VM[vmName]; ok {
 			if err := upVM(vm, cfg.Network, dryRun); err != nil {
-				fmt.Printf("Error bringing vm: %s up, %v\n", vm.UUID, err)
-				return err
+				return fmt.Errorf("error bringing vm: %s up, %v", vm.UUID, err)
 			}
+		} else {
+			return fmt.Errorf("VM %s not found in the configuration", vmName)
 		}
 	} else {
 		for _, vm := range cfg.VM {
