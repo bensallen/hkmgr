@@ -27,7 +27,7 @@ func (b *Bridge) Up() error {
 		if err := b.setIP(); err != nil {
 			return err
 		}
-		if err := b.setMembers(nil); err != nil {
+		if err := b.setMembers(nil, false); err != nil {
 			return err
 		}
 		if err := b.setUp(); err != nil {
@@ -44,7 +44,7 @@ func (b *Bridge) Up() error {
 				return err
 			}
 		}
-		if err := b.setMembers(bridge.Members); err != nil {
+		if err := b.setMembers(bridge.Members, false); err != nil {
 			return err
 		}
 		if err := b.setUp(); err != nil {
@@ -122,15 +122,17 @@ func (b *Bridge) setIP() error {
 	return cmd.Run()
 }
 
-// setMembers adds member devices to a bridge device
-func (b *Bridge) setMembers(cur []string) error {
+// setMembers idempotently adds member devices listed in the Members attribute to a bridge device
+// and conditionally removes any additional members passed in cur. A list of current bridge members
+// should be passsed as an agrument for idempotence.
+func (b *Bridge) setMembers(cur []string, delete bool) error {
 	add, del := sliceDiff(b.Members, cur)
 	if add != nil {
 		if err := addMembers(b.Device, add); err != nil {
 			return err
 		}
 	}
-	if del != nil {
+	if delete && del != nil {
 		if err := delMembers(b.Device, del); err != nil {
 			return err
 		}
