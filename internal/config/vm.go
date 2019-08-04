@@ -1,10 +1,12 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"strconv"
 	"strings"
 
@@ -144,6 +146,39 @@ func (v *VMConfig) Cli() []string {
 	return args
 }
 
+func (v *VMConfig) Validate() error {
+	if v.UUID == "" {
+		return errors.New("UUID not specified")
+	}
+
+	if v.Cores == 0 {
+		return errors.New("Cores not specified")
+	}
+
+	if v.Memory == "" {
+		return errors.New("Memory not specified")
+	}
+
+	if v.RunDir == "" {
+		return errors.New("RunDir not specified")
+	}
+
+	for _, net := range v.Network {
+		if err := net.validate(); err != nil {
+			return err
+		}
+	}
+
+	//	for i, hdd := range v.HDD {
+	//		args = append(args, "-s", fmt.Sprintf("3:%d,%s,file://%s,format=%s", i, hdd.Driver, hdd.Path, hdd.Format))
+	//	}
+	//
+	//	for i, cd := range v.CDROM {
+	//		args = append(args, "-s", fmt.Sprintf("4:%d,%s,%s", i, cd.Driver, cd.Path))
+	//	}
+	return nil
+}
+
 // Boot config
 type Boot struct {
 	Kexec    Kexec    `toml:"kexec"`
@@ -202,6 +237,49 @@ type NetConf struct {
 	Device   string `toml:"device"`
 	Driver   string `toml:"driver"`
 	MemberOf string `toml:"memberOf"`
+}
+
+func (n *NetConf) validate() error {
+
+	switch n.Driver {
+
+	case "virtio-tap":
+		if n.MAC == "" {
+			return errors.New("interface type tap requires a MAC address to be specified")
+		}
+		if n.Device == "" {
+			return errors.New("interface type tap requires a Device to be specified")
+		}
+		dev, err := os.OpenFile(n.devicePath(), os.O_WRONLY, 0666)
+		dev.Close()
+
+		if err != nil {
+			return fmt.Errorf("cannot open or write to tap interface %s, %v", n.Device, err)
+		}
+
+	case "virtio-net":
+		u, err := user.Current()
+		if err != nil {
+			return err
+		}
+		if u.Uid != "0" {
+			return errors.New("virtio-net requires running as UID=0")
+		}
+
+	case "virtio-vpnkit":
+		return errors.New("virtio-vpnkit support is not yet implemented")
+
+	default:
+		return fmt.Errorf("network driver %s not supported: drivers virtio-tap, virtio-net, and virtio-vpnkit are supported", n.Driver)
+	}
+	return nil
+}
+
+func (n *NetConf) devicePath() string {
+	if n.Device[0] == '/' {
+		return n.Device
+	}
+	return "/dev/" + n.Device
 }
 
 type HDD struct {
