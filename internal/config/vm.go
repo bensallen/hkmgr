@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
 	"strconv"
 	"strings"
 
@@ -46,6 +45,19 @@ const (
 	// NotFound status represents that a pid file was not found
 	NotFound Status = 3
 )
+
+func (s Status) String() string {
+	switch s {
+	case 1:
+		return "running"
+	case 2:
+		return "stopped"
+	case 3:
+		return "PID file not found"
+	default:
+		return "unknown"
+	}
+}
 
 // Up starts a VM if its not already running.
 func (v *VMConfig) Up() error {
@@ -258,11 +270,7 @@ func (n *NetConf) validate() error {
 		}
 
 	case "virtio-net":
-		u, err := user.Current()
-		if err != nil {
-			return err
-		}
-		if u.Uid != "0" {
+		if os.Geteuid() != 0 {
 			return errors.New("virtio-net requires running as UID=0")
 		}
 
