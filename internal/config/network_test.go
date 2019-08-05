@@ -10,12 +10,13 @@ import (
 
 func TestTap_toBridge(t *testing.T) {
 	type fields struct {
-		Bridge  string
-		IP      string
-		Nat     bool
-		NatIf   string
-		PfRules []string
-		DHCP    bool
+		Bridge    string
+		IP        string
+		Nat       bool
+		NatIf     string
+		PfRules   []string
+		DHCP      bool
+		BridgeDev *network.Bridge
 	}
 	tests := []struct {
 		name    string
@@ -50,20 +51,21 @@ func TestTap_toBridge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tap := &Tap{
-				Bridge:  tt.fields.Bridge,
-				IP:      tt.fields.IP,
-				Nat:     tt.fields.Nat,
-				NatIf:   tt.fields.NatIf,
-				PfRules: tt.fields.PfRules,
-				DHCP:    tt.fields.DHCP,
+				Bridge:    tt.fields.Bridge,
+				IP:        tt.fields.IP,
+				Nat:       tt.fields.Nat,
+				NatIf:     tt.fields.NatIf,
+				PfRules:   tt.fields.PfRules,
+				DHCP:      tt.fields.DHCP,
+				BridgeDev: tt.fields.BridgeDev,
 			}
-			got, err := tap.toBridge()
+			err := tap.toBridge()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Tap.toBridge() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Tap.toBridge() = %#v, want %#v", got, tt.want)
+			if !reflect.DeepEqual(tap.BridgeDev, tt.want) {
+				t.Errorf("Tap.toBridge() = %#v, want %#v", tap.BridgeDev, tt.want)
 			}
 		})
 	}
