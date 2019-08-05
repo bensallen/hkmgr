@@ -10,6 +10,7 @@ import (
 	"github.com/bensallen/hkmgr/internal/destroy"
 	"github.com/bensallen/hkmgr/internal/down"
 	"github.com/bensallen/hkmgr/internal/ssh"
+	"github.com/bensallen/hkmgr/internal/status"
 	"github.com/bensallen/hkmgr/internal/up"
 	"github.com/integrii/flaggy"
 	"github.com/kr/pretty"
@@ -23,6 +24,7 @@ func Run() error {
 	var destroySubcommand *flaggy.Subcommand
 	var validateSubcommand *flaggy.Subcommand
 	var sshSubcommand *flaggy.Subcommand
+	var statusSubcommand *flaggy.Subcommand
 	var consoleSubcommand *flaggy.Subcommand
 
 	configPath := "hkmgr.toml"
@@ -55,6 +57,10 @@ func Run() error {
 	validateSubcommand.Description = "Validate configuration"
 	validateSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM")
 
+	statusSubcommand = flaggy.NewSubcommand("status")
+	statusSubcommand.Description = "Display status of VMs"
+	statusSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM")
+
 	sshSubcommand = flaggy.NewSubcommand("ssh")
 	sshSubcommand.Description = "SSH to VM"
 	sshSubcommand.AddPositionalValue(&vmName, "name", 1, true, "Specify a VM")
@@ -67,6 +73,7 @@ func Run() error {
 	flaggy.AttachSubcommand(downSubcommand, 1)
 	flaggy.AttachSubcommand(destroySubcommand, 1)
 	flaggy.AttachSubcommand(validateSubcommand, 1)
+	flaggy.AttachSubcommand(statusSubcommand, 1)
 	flaggy.AttachSubcommand(sshSubcommand, 1)
 	flaggy.AttachSubcommand(consoleSubcommand, 1)
 
@@ -107,6 +114,10 @@ func Run() error {
 		if err := destroy.Run(&config); err != nil {
 			return err
 		}
+	} else if statusSubcommand.Used {
+		if err := status.Current(&config, vmName, debug); err != nil {
+			return err
+		}
 	} else if sshSubcommand.Used {
 		if err := ssh.Run(&config); err != nil {
 			return err
@@ -115,6 +126,8 @@ func Run() error {
 		if err := console.Run(&config); err != nil {
 			return err
 		}
+	} else {
+		flaggy.ShowHelpAndExit("")
 	}
 
 	return nil
