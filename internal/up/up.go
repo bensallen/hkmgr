@@ -25,7 +25,7 @@ func Run(cfg *config.Config, vmName string, debug bool, dryRun bool) error {
 				return fmt.Errorf("bringing vm: %s up, %v", vm.UUID, err)
 			}
 		} else {
-			return fmt.Errorf("VM %s not found in the configuration", vmName)
+			return fmt.Errorf("%s not found in the configuration", vmName)
 		}
 	} else {
 		for name, vm := range cfg.VM {
