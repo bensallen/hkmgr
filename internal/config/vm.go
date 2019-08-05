@@ -76,10 +76,10 @@ func (v *VMConfig) Up() error {
 	}
 
 	w, err := os.Create(v.RunDir + "/pid")
-	defer w.Close()
 	if err != nil {
 		return err
 	}
+	defer w.Close()
 
 	if _, err := w.WriteString(strconv.Itoa(cmd.Process.Pid)); err != nil {
 		return err
@@ -110,9 +110,8 @@ func (v *VMConfig) Status() Status {
 	}
 	if proc == nil {
 		return Stopped
-	} else {
-		return Running
 	}
+	return Running
 }
 
 func (v *VMConfig) Cli() []string {
@@ -164,11 +163,11 @@ func (v *VMConfig) Validate() error {
 	}
 
 	if v.Cores == 0 {
-		return errors.New("Cores not specified")
+		return errors.New("cores not specified")
 	}
 
 	if v.Memory == "" {
-		return errors.New("Memory not specified")
+		return errors.New("memory not specified")
 	}
 
 	if v.RunDir == "" {

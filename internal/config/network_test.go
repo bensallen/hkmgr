@@ -10,12 +10,12 @@ import (
 
 func TestTap_toBridge(t *testing.T) {
 	type fields struct {
+		Nat       bool
+		DHCP      bool
 		Bridge    string
 		IP        string
-		Nat       bool
 		NatIf     string
 		PfRules   []string
-		DHCP      bool
 		BridgeDev *network.Bridge
 	}
 	tests := []struct {

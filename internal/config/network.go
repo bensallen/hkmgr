@@ -54,12 +54,12 @@ func (v *Vmnet) Destroy() error {
 }
 
 type Tap struct {
+	Nat       bool     `toml:"nat"`
+	DHCP      bool     `toml:"dhcp"`
 	Bridge    string   `toml:"bridge"`
 	IP        string   `toml:"ip"`
-	Nat       bool     `toml:"nat"`
 	NatIf     string   `toml:"nat_if"`
 	PfRules   []string `toml:"pf_rules"`
-	DHCP      bool     `toml:"dhcp"`
 	BridgeDev *network.Bridge
 }
 
@@ -87,8 +87,8 @@ func (t *Tap) toBridge() error {
 		var ip net.IP
 		var mask []byte
 		if strings.Contains(t.IP, "/") {
-			cidr := &net.IPNet{}
 			var err error
+			var cidr *net.IPNet
 			ip, cidr, err = net.ParseCIDR(t.IP)
 			if err != nil {
 				return err
@@ -97,7 +97,7 @@ func (t *Tap) toBridge() error {
 		} else {
 			ip = net.ParseIP(t.IP)
 			if ip == nil {
-				return fmt.Errorf("Could not parse IP address: %s", t.IP)
+				return fmt.Errorf("could not parse IP address: %s", t.IP)
 			}
 			mask = ip.DefaultMask()
 		}

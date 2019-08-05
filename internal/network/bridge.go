@@ -124,7 +124,7 @@ func (b *Bridge) setIP() error {
 
 // setMembers idempotently adds member devices listed in the Members attribute to a bridge device
 // and conditionally removes any additional members passed in cur. A list of current bridge members
-// should be passsed as an agrument for idempotence.
+// should be passsed as an argument for idempotence.
 func (b *Bridge) setMembers(cur []string, delete bool) error {
 	add, del := sliceDiff(b.Members, cur)
 	if add != nil {

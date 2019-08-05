@@ -102,31 +102,32 @@ func Run() error {
 		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
 	}
 
-	if upSubcommand.Used {
+	switch {
+	case upSubcommand.Used:
 		if err := up.Run(&config, vmName, debug, dryRun); err != nil {
 			return err
 		}
-	} else if downSubcommand.Used {
+	case downSubcommand.Used:
 		if err := down.Run(&config); err != nil {
 			return err
 		}
-	} else if destroySubcommand.Used {
+	case destroySubcommand.Used:
 		if err := destroy.Run(&config); err != nil {
 			return err
 		}
-	} else if statusSubcommand.Used {
+	case statusSubcommand.Used:
 		if err := status.Current(&config, vmName, debug); err != nil {
 			return err
 		}
-	} else if sshSubcommand.Used {
+	case sshSubcommand.Used:
 		if err := ssh.Run(&config); err != nil {
 			return err
 		}
-	} else if consoleSubcommand.Used {
+	case consoleSubcommand.Used:
 		if err := console.Run(&config); err != nil {
 			return err
 		}
-	} else {
+	default:
 		flaggy.ShowHelpAndExit("")
 	}
 
