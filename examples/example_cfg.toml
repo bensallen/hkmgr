@@ -31,9 +31,9 @@ check_for_ssh = true
 before = ["ros-vm2"]
 run_dir = ".run/vm/ros-vm1"
 
-#[[vm.ros-vm1.network]]
-#driver = "virtio-net"
-#memberOf = "net1"
+[[vm.ros-vm1.network]]
+driver = "virtio-net"
+memberOf = "net1"
 
 [[vm.ros-vm1.network]]
 ip = "192.168.99.11/24"
@@ -66,19 +66,19 @@ cmdline = "console=tty0 console=ttyS0,115200 earlyprintk=serial rancher.autologi
 #driver = "ahci-cd"
 #extract = false
 
-#[vm.ros-vm2]
-#memory = "1GB"
-#cores = 1
-#after = ["ros-vm1"]
-#requires = ["ros-vm1"]
-#uuid = "09D30738-887C-48CA-8A80-687CEEB4CADB"
-#
-#[[vm.ros-vm2.network]]
-#ip = "192.168.99.13/24"
-#mac = "AA:BB:CC:DD:00:02"
-#device = "tap1"
-#driver = "virtio-tap"
-#memberOf = "net2"
-#
-#[vm.ros-vm2.boot.firmware]
-#path = "UEFI.fd"
+[vm.ros-vm2]
+memory = "1GB"
+cores = 1
+after = ["ros-vm1"]
+requires = ["ros-vm1"]
+uuid = "09D30738-887C-48CA-8A80-687CEEB4CADB"
+
+[[vm.ros-vm2.network]]
+ip = "192.168.99.13/24"
+mac = "AA:BB:CC:DD:00:02"
+device = "tap1"
+driver = "virtio-tap"
+memberOf = "net2"
+
+[vm.ros-vm2.boot.firmware]
+path = "UEFI.fd"
