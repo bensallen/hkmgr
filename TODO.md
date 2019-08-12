@@ -17,7 +17,6 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Generate HDD if it doesn't already exist
 - Generate UUID if not specified, store in run dir
 - Generate MAC for tap interfaces if not specified, store in run dir
-- If one of the tap interfaces doesn't come up, still add the ones that do come up to the bridge
 - Add CI, CircleCI, clean code, etc.
 
 ## Down
@@ -48,3 +47,4 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Check UID == 0 if using vmnet
 - Check status of a VM before starting in Up()
 - Check that kernel and vmlinux exist in Up() of boot.kexec
+- If one of the tap interfaces doesn't come up, still add the ones that do come up to the bridge

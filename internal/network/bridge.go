@@ -147,13 +147,15 @@ func addMembers(device string, members []string) error {
 	}
 
 	args := []string{device}
+NextMember:
 	for _, member := range members {
 
 		// Ugly polling and timeout mechanism waiting for the hyperkit to bring up the tap interface.
 		var count int
 		for {
 			if count > 10 {
-				return fmt.Errorf("failed to find device %s after 10 seconds, attempting to add it to bridge %s", member, device)
+				fmt.Printf("failed to find device %s after 10 seconds, while attempting to add it to bridge %s\n", member, device)
+				continue NextMember
 			}
 			if _, err := net.InterfaceByName(member); err != nil {
 				time.Sleep(1 * time.Second)
