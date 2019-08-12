@@ -6,3 +6,5 @@ github.com/integrii/flaggy
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
+# github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
+github.com/mitchellh/go-ps
