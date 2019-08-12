@@ -19,7 +19,7 @@ func Run(cfg *config.Config, vmName string, debug bool, dryRun bool) error {
 	if vmName != "" {
 		if vm, ok := cfg.VM[vmName]; ok {
 			if err := vm.Validate(); err != nil {
-				return fmt.Errorf("validing the configuration of %s, %v", vmName, err)
+				return fmt.Errorf("validating the configuration of %s, %v", vmName, err)
 			}
 			if err := upVM(vm, cfg.Network, dryRun); err != nil {
 				return fmt.Errorf("bringing vm: %s up, %v", vm.UUID, err)

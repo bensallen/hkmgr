@@ -174,6 +174,10 @@ func (v *VMConfig) Validate() error {
 		return errors.New("RunDir not specified")
 	}
 
+	if err := v.Boot.Validate(); err != nil {
+		return err
+	}
+
 	// Return here if the VM is already running, as the remaining checks will fail with a running VM.
 	if v.Status() == Running {
 		return nil
@@ -211,6 +215,22 @@ func (b *Boot) Cli() []string {
 	return []string{}
 }
 
+func (b *Boot) Validate() error {
+	if (Kexec{}) != b.Kexec {
+		return b.Kexec.Validate()
+	}
+
+	if (Firmware{}) != b.Firmware {
+		return b.Firmware.Validate()
+	}
+
+	if (FBSD{}) != b.FBSD {
+		return b.FBSD.Validate()
+	}
+
+	return nil
+}
+
 type Kexec struct {
 	Kernel  string `toml:"kernel"`
 	Initrd  string `toml:"initrd"`
@@ -221,12 +241,30 @@ func (k *Kexec) Cli() []string {
 	return []string{"-f", fmt.Sprintf("kexec,%s,%s,%s", k.Kernel, k.Initrd, k.Cmdline)}
 }
 
+func (k *Kexec) Validate() error {
+
+	if !fileExists(k.Kernel) {
+		return fmt.Errorf("kernel not found: %s", k.Kernel)
+	}
+
+	if !fileExists(k.Initrd) {
+		return fmt.Errorf("initrd not found: %s", k.Initrd)
+	}
+
+	return nil
+}
+
 type Firmware struct {
 	Path string `toml:"path"`
 }
 
 func (f *Firmware) Cli() []string {
 	return []string{"-f", fmt.Sprintf("bootrom,%s,,", f.Path)}
+}
+
+//Validate for Firmware is currently a noop, TODO.
+func (f *Firmware) Validate() error {
+	return nil
 }
 
 type FBSD struct {
@@ -237,6 +275,11 @@ type FBSD struct {
 
 func (f *FBSD) Cli() []string {
 	return []string{"-f", fmt.Sprintf("fbsd,%s,%s,%s", f.Userboot, f.BootVolume, f.KernelEnv)}
+}
+
+//Validate for FBSD is currently a noop, TODO.
+func (f *FBSD) Validate() error {
+	return nil
 }
 
 // VM Network Config
@@ -303,4 +346,13 @@ type CDROM struct {
 	Path    string
 	Driver  string
 	Extract bool
+}
+
+// Check if a file exists and isn't a directory
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
