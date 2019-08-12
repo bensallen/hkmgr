@@ -174,19 +174,17 @@ func (v *VMConfig) Validate() error {
 		return errors.New("RunDir not specified")
 	}
 
+	// Return here if the VM is already running, as the remaining checks will fail with a running VM.
+	if v.Status() == Running {
+		return nil
+	}
+
 	for _, net := range v.Network {
 		if err := net.validate(); err != nil {
 			return err
 		}
 	}
 
-	//	for i, hdd := range v.HDD {
-	//		args = append(args, "-s", fmt.Sprintf("3:%d,%s,file://%s,format=%s", i, hdd.Driver, hdd.Path, hdd.Format))
-	//	}
-	//
-	//	for i, cd := range v.CDROM {
-	//		args = append(args, "-s", fmt.Sprintf("4:%d,%s,%s", i, cd.Driver, cd.Path))
-	//	}
 	return nil
 }
 
