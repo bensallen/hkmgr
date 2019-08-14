@@ -23,3 +23,12 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+brews:
+  - github:
+      owner: bensallen
+      name: homebrew-hkmgr
+    homepage: "https://github.com/bensallen/hkmgr"
+    description: "Hkmgr is a virtual machine manager for the hyperkit macOS hypervisor."
+    skip_upload: auto
+    dependencies:
+      - hyperkit
