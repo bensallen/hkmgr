@@ -47,6 +47,8 @@ func Run() error {
 
 	downSubcommand = flaggy.NewSubcommand("down")
 	downSubcommand.Description = "Stop VMs"
+	var downSignal string
+	downSubcommand.String(&downSignal, "s", "signal", "Signal to send to VM")
 	downSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be stopped")
 
 	destroySubcommand = flaggy.NewSubcommand("destroy")
@@ -71,11 +73,11 @@ func Run() error {
 
 	flaggy.AttachSubcommand(upSubcommand, 1)
 	flaggy.AttachSubcommand(downSubcommand, 1)
-	flaggy.AttachSubcommand(destroySubcommand, 1)
-	flaggy.AttachSubcommand(validateSubcommand, 1)
+	//flaggy.AttachSubcommand(destroySubcommand, 1)
+	//flaggy.AttachSubcommand(validateSubcommand, 1)
 	flaggy.AttachSubcommand(statusSubcommand, 1)
-	flaggy.AttachSubcommand(sshSubcommand, 1)
-	flaggy.AttachSubcommand(consoleSubcommand, 1)
+	//flaggy.AttachSubcommand(sshSubcommand, 1)
+	//flaggy.AttachSubcommand(consoleSubcommand, 1)
 
 	flaggy.SetVersion(version)
 	flaggy.Parse()
@@ -108,7 +110,7 @@ func Run() error {
 			return err
 		}
 	case downSubcommand.Used:
-		if err := down.Run(&config); err != nil {
+		if err := down.Run(&config, vmName, downSignal); err != nil {
 			return err
 		}
 	case destroySubcommand.Used:

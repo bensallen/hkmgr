@@ -18,12 +18,15 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Generate UUID if not specified, store in run dir
 - Generate MAC for tap interfaces if not specified, store in run dir
 - Add CI, CircleCI, clean code, etc.
+- Reorganize internal/config to move VM action logic outside of config
 
 ## Down
 
 ## Destroy
 
 ## Status
+
+- Add pid in status output
 
 ## SSH
 

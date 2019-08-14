@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/mitchellh/go-ps"
 )
@@ -88,18 +89,19 @@ func (v *VMConfig) Up() error {
 	return nil
 }
 
-// Status attempts to find the pid file in the run dir of a VM and checks to see if its running or not.
-func (v *VMConfig) Status() Status {
-	pidFile := v.RunDir + "/pid"
-	if _, err := os.Stat(pidFile); os.IsNotExist(err) {
-		return NotFound
-	}
-	pidTxt, err := ioutil.ReadFile(pidFile)
-	if err != nil {
-		return NotFound
+// Down stops a VM if its running.
+func (v *VMConfig) Down(signal string) error {
+	if v.Status() != Running {
+		return fmt.Errorf("not running")
 	}
 
-	pid, err := strconv.Atoi(string(pidTxt))
+	return v.Kill(signal)
+}
+
+// Status attempts to find the pid file in the run dir of a VM and checks to see if its running or not.
+func (v *VMConfig) Status() Status {
+	pidFilePath := v.RunDir + "/pid"
+	pid, err := pidFile(pidFilePath)
 	if err != nil {
 		return NotFound
 	}
@@ -112,6 +114,71 @@ func (v *VMConfig) Status() Status {
 		return Stopped
 	}
 	return Running
+}
+
+// Kill attempts to kill a VM via the pid file with the specified signal.
+func (v *VMConfig) Kill(signal string) error {
+	var sysSig syscall.Signal
+	if signal == "" {
+		sysSig = syscall.SIGTERM
+	} else {
+		var err error
+		if sysSig, err = sigLookup(signal); err != nil {
+			return err
+		}
+	}
+
+	pidFilePath := v.RunDir + "/pid"
+	pid, err := pidFile(pidFilePath)
+	if err != nil {
+		return err
+	}
+
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+
+	return proc.Signal(sysSig)
+}
+
+func sigLookup(s string) (syscall.Signal, error) {
+	sigmap := map[string]syscall.Signal{
+		"SIGINT":  syscall.Signal(2),
+		"SIGKILL": syscall.Signal(9),
+		"SIGUSR1": syscall.Signal(10),
+		"SIGUSR2": syscall.Signal(12),
+		"SIGTERM": syscall.Signal(15),
+		"2":       syscall.Signal(2),
+		"9":       syscall.Signal(9),
+		"10":      syscall.Signal(10),
+		"12":      syscall.Signal(12),
+		"15":      syscall.Signal(15),
+	}
+
+	sig, ok := sigmap[s]
+	if !ok {
+		return 0, fmt.Errorf("%s is not a supported signal", s)
+	}
+
+	return sig, nil
+}
+
+func pidFile(path string) (int, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return 0, fmt.Errorf("pid file not found")
+	}
+	pidTxt, err := ioutil.ReadFile(path)
+	if err != nil {
+		return 0, fmt.Errorf("pid file cannot be read")
+	}
+
+	pid, err := strconv.Atoi(string(pidTxt))
+	if err != nil {
+		return 0, fmt.Errorf("pid file does not contain an integer")
+	}
+
+	return pid, nil
 }
 
 func (v *VMConfig) Cli() []string {
