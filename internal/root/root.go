@@ -3,6 +3,7 @@ package root
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/bensallen/hkmgr/internal/config"
@@ -100,6 +101,11 @@ func Run() error {
 		return err
 	}
 
+	if config.Path, err = filepath.Abs(configPath); err != nil {
+		return err
+	}
+
+	config.UpdateRelativePaths()
 	if debug {
 		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
 	}

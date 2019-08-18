@@ -51,7 +51,7 @@ func Run(cfg *config.Config, vmName string, debug bool, dryRun bool) error {
 	return nil
 }
 
-func upVM(vm config.VMConfig, netCfg config.Network, dryRun bool) error {
+func upVM(vm *config.VMConfig, netCfg config.Network, dryRun bool) error {
 	fmt.Printf("Booting VM: %s\n", vm.UUID)
 
 	if err := os.MkdirAll(vm.RunDir, os.ModePerm); err != nil {

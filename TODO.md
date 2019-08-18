@@ -5,7 +5,6 @@ Configuring Network: "net0"
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 
-- Make relative paths be relative to the config file.
 - Make relative paths in a VM config relative to the run_dir
 - Add dependency graph ordering
 - Debug logging
@@ -20,7 +19,13 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Add CI, CircleCI, clean code, etc.
 - Reorganize internal/config to move VM action logic outside of config
 
+## Init
+
+- Generate a hkmgr.toml
+
 ## Down
+- Change this to "stop"
+- Prompt when running without a specific VM, asking if all VMs should be stopped to avoid annoyances. Add -y flag to answer via CLI.
 
 ## Destroy
 
@@ -51,3 +56,4 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Check status of a VM before starting in Up()
 - Check that kernel and vmlinux exist in Up() of boot.kexec
 - If one of the tap interfaces doesn't come up, still add the ones that do come up to the bridge
+- Make relative paths be relative to the config file.

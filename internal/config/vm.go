@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -16,7 +17,7 @@ import (
 var hyperkitPath = "hyperkit"
 
 // VMs
-type VM map[string]VMConfig
+type VM map[string]*VMConfig
 
 type VMConfig struct {
 	Memory        string    `toml:"memory"`
@@ -257,6 +258,15 @@ func (v *VMConfig) Validate() error {
 	}
 
 	return nil
+}
+
+func (v *VMConfig) updateRelativePaths(configPath string, name string) {
+	configDir := filepath.Dir(configPath)
+	if v.RunDir == "" {
+		v.RunDir = filepath.Join(configDir, ".run/vm/", name)
+	} else if v.RunDir[:0] != "/" {
+		v.RunDir = filepath.Join(configDir, v.RunDir)
+	}
 }
 
 // Boot config
