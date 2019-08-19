@@ -1,5 +1,10 @@
 package config
 
+import (
+	"path/filepath"
+)
+
+// Config represents a hkmgr.toml config file
 type Config struct {
 	Network Network `toml:"network"`
 	VM      VM      `toml:"vm"`
@@ -9,7 +14,18 @@ type Config struct {
 // UpdateRelativePaths finds relative paths in the config and turns them into
 // fully qualified paths based on the config file path.
 func (c *Config) UpdateRelativePaths() {
+	configDir := filepath.Dir(c.Path)
+
 	for name := range c.VM {
-		c.VM[name].updateRelativePaths(c.Path, name)
+		c.VM[name].updateRelativePaths(configDir, name)
+	}
+}
+
+// Defaults sets default values for unset variables in the config.
+func (c *Config) Defaults() {
+	configDir := filepath.Dir(c.Path)
+
+	for name := range c.VM {
+		c.VM[name].defaults(configDir, name)
 	}
 }

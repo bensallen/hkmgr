@@ -105,7 +105,9 @@ func Run() error {
 		return err
 	}
 
+	config.Defaults()
 	config.UpdateRelativePaths()
+
 	if debug {
 		fmt.Printf("Parsed config:\n\n%# v\n", pretty.Formatter(config))
 	}

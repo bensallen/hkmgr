@@ -20,20 +20,20 @@ var hyperkitPath = "hyperkit"
 type VM map[string]*VMConfig
 
 type VMConfig struct {
-	Memory        string    `toml:"memory"`
-	Cores         int       `toml:"cores"`
-	UUID          string    `toml:"uuid"`
-	SSHKey        string    `toml:"ssh_key"`
-	ProvisionPre  string    `toml:"provision_pre"`
-	ProvisionPost string    `toml:"provision_post"`
-	Before        []string  `toml:"before"`
-	After         []string  `toml:"after"`
-	Requires      []string  `toml:"requires"`
-	RunDir        string    `toml:"run_dir"`
-	Network       []NetConf `toml:"network"`
-	Boot          Boot      `toml:"boot"`
-	HDD           []HDD     `toml:"hdd"`
-	CDROM         []CDROM   `toml:"cdrom"`
+	Memory        string     `toml:"memory"`
+	Cores         int        `toml:"cores"`
+	UUID          string     `toml:"uuid"`
+	SSHKey        string     `toml:"ssh_key"`
+	ProvisionPre  string     `toml:"provision_pre"`
+	ProvisionPost string     `toml:"provision_post"`
+	Before        []string   `toml:"before"`
+	After         []string   `toml:"after"`
+	Requires      []string   `toml:"requires"`
+	RunDir        string     `toml:"run_dir"`
+	Network       []*NetConf `toml:"network"`
+	Boot          Boot       `toml:"boot"`
+	HDD           []*HDD     `toml:"hdd"`
+	CDROM         []*CDROM   `toml:"cdrom"`
 }
 
 // Status is the status of a VM process
@@ -242,7 +242,7 @@ func (v *VMConfig) Validate() error {
 		return errors.New("RunDir not specified")
 	}
 
-	if err := v.Boot.Validate(); err != nil {
+	if err := v.Boot.validate(); err != nil {
 		return err
 	}
 
@@ -260,12 +260,23 @@ func (v *VMConfig) Validate() error {
 	return nil
 }
 
-func (v *VMConfig) updateRelativePaths(configPath string, name string) {
-	configDir := filepath.Dir(configPath)
+func (v *VMConfig) defaults(configDir string, name string) {
 	if v.RunDir == "" {
 		v.RunDir = filepath.Join(configDir, ".run/vm/", name)
-	} else if v.RunDir[:0] != "/" {
+	}
+}
+
+func (v *VMConfig) updateRelativePaths(configDir string, name string) {
+	if v.RunDir[:1] != "/" {
 		v.RunDir = filepath.Join(configDir, v.RunDir)
+	}
+
+	v.Boot.updateRelativePaths(configDir)
+	for i := range v.HDD {
+		v.HDD[i].updateRelativePaths(v.RunDir)
+	}
+	for i := range v.CDROM {
+		v.CDROM[i].updateRelativePaths(v.RunDir)
 	}
 }
 
@@ -292,7 +303,7 @@ func (b *Boot) Cli() []string {
 	return []string{}
 }
 
-func (b *Boot) Validate() error {
+func (b *Boot) validate() error {
 	if (Kexec{}) != b.Kexec {
 		return b.Kexec.Validate()
 	}
@@ -308,6 +319,20 @@ func (b *Boot) Validate() error {
 	return nil
 }
 
+func (b *Boot) updateRelativePaths(configDir string) {
+	if (Kexec{}) != b.Kexec {
+		b.Kexec.updateRelativePaths(configDir)
+	}
+
+	if (Firmware{}) != b.Firmware {
+		b.Firmware.updateRelativePaths(configDir)
+	}
+
+	if (FBSD{}) != b.FBSD {
+		b.FBSD.updateRelativePaths(configDir)
+	}
+}
+
 type Kexec struct {
 	Kernel  string `toml:"kernel"`
 	Initrd  string `toml:"initrd"`
@@ -319,7 +344,6 @@ func (k *Kexec) Cli() []string {
 }
 
 func (k *Kexec) Validate() error {
-
 	if !fileExists(k.Kernel) {
 		return fmt.Errorf("kernel not found: %s", k.Kernel)
 	}
@@ -329,6 +353,16 @@ func (k *Kexec) Validate() error {
 	}
 
 	return nil
+}
+
+func (k *Kexec) updateRelativePaths(configDir string) {
+	if k.Kernel[:1] != "/" {
+		k.Kernel = filepath.Join(configDir, k.Kernel)
+	}
+
+	if k.Initrd[:1] != "/" {
+		k.Initrd = filepath.Join(configDir, k.Initrd)
+	}
 }
 
 type Firmware struct {
@@ -342,6 +376,12 @@ func (f *Firmware) Cli() []string {
 //Validate for Firmware is currently a noop, TODO.
 func (f *Firmware) Validate() error {
 	return nil
+}
+
+func (f *Firmware) updateRelativePaths(configDir string) {
+	if f.Path[:1] != "/" {
+		f.Path = filepath.Join(configDir, f.Path)
+	}
 }
 
 type FBSD struct {
@@ -359,7 +399,17 @@ func (f *FBSD) Validate() error {
 	return nil
 }
 
-// VM Network Config
+func (f *FBSD) updateRelativePaths(configDir string) {
+	if f.Userboot[:1] != "/" {
+		f.Userboot = filepath.Join(configDir, f.Userboot)
+	}
+
+	if f.Userboot[:1] != "/" {
+		f.BootVolume = filepath.Join(configDir, f.BootVolume)
+	}
+}
+
+// NetConf is a VM network configuration
 type NetConf struct {
 	IP       string `toml:"ip"`
 	MAC      string `toml:"mac"`
@@ -401,7 +451,7 @@ func (n *NetConf) validate() error {
 }
 
 func (n *NetConf) devicePath() string {
-	if n.Device[0] == '/' {
+	if n.Device[:1] == "/" {
 		return n.Device
 	}
 	return "/dev/" + n.Device
@@ -419,10 +469,22 @@ func (h *HDD) create() error {
 	return nil
 }
 
+func (h *HDD) updateRelativePaths(runDir string) {
+	if h.Path[:1] != "/" {
+		h.Path = filepath.Join(runDir, h.Path)
+	}
+}
+
 type CDROM struct {
 	Path    string
 	Driver  string
 	Extract bool
+}
+
+func (c *CDROM) updateRelativePaths(runDir string) {
+	if c.Path[:1] != "/" {
+		c.Path = filepath.Join(runDir, c.Path)
+	}
 }
 
 // Check if a file exists and isn't a directory
