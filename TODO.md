@@ -1,3 +1,61 @@
+# TODOs
+
+## Features
+
+- Add CI, CircleCI, clean code, etc.
+- Add dependency graph ordering
+
+### Config
+
+- Reorganize internal/config to move VM action logic outside of config, eg. vm/vm.go
+- Generate HDD if it doesn't already exist
+- Generate UUID if not specified, store in .run/vm/<name>/uuid
+- Generate MAC for tap interfaces if not specified, store in .run/vm/<name>/<net>_mac
+- Check write privs on run_dir, pid, and tty in Validate()
+- Check write privs on hdd, read privs on cdrom
+- Add template support for kexec cmdline for IP, ssh public
+- Add hyperkit multiboot as another boot option
+
+### Logging
+
+- Remove all fmt.Printf and use log or similar
+- Add debug logging
+- Add cmd stdout/stderr to debug logging
+
+### Up
+
+- Change permissions on tap and tty, then drop privs to run hyperkit
+- Automatically pick a unused tap interface if not specified
+
+### Init
+
+- Generate a hkmgr.toml
+
+### Down
+
+- Change this to "stop"
+- Prompt when running without a specific VM, asking if all VMs should be stopped to avoid annoyances. Add -y flag to answer via CLI.
+
+### Destroy
+
+### Status
+
+- Add pid in status output
+
+### SSH
+
+### Console
+
+- Test and consider integrating https://github.com/ishuah/bifrost/, otherwise just exec screen
+
+### Host Config Automation
+
+- Support for adding/removing routes on the host
+- Move pf rules to a new host sections of config
+- Support for adding/removing pf rules on the host
+- Add sysctl enable forwarding
+
+## Bugs
 
 - Fix double call to setIP
 
@@ -5,45 +63,6 @@ Configuring Network: "net0"
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 
-- Add dependency graph ordering
-- Debug logging
-- Remove all fmt.Printf and use log or similar
-- Add cmd stdout/stderr to debug logging
-- Check write privs on run_dir, pid, and tty in Validate()
-- Check write privs on hdd, read privs on cdrom
-- Change permissions on tap and tty, then drop privs to run hyperkit
-- Generate HDD if it doesn't already exist
-- Generate UUID if not specified, store in run dir
-- Generate MAC for tap interfaces if not specified, store in run dir
-- Add CI, CircleCI, clean code, etc.
-- Reorganize internal/config to move VM action logic outside of config
-
-## Init
-
-- Generate a hkmgr.toml
-
-## Down
-- Change this to "stop"
-- Prompt when running without a specific VM, asking if all VMs should be stopped to avoid annoyances. Add -y flag to answer via CLI.
-
-## Destroy
-
-## Status
-
-- Add pid in status output
-
-## SSH
-
-## Console
-
-- Test and consider integrating https://github.com/ishuah/bifrost/, otherwise just exec screen
-
-## Host Config Automation
-
-- Support for adding/removing routes on the host
-- Move pf rules to a new host sections of config
-- Support for adding/removing pf rules on the host
-- Add sysctl enable forwarding
 
 ## Completed
 
