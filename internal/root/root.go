@@ -9,10 +9,10 @@ import (
 	"github.com/bensallen/hkmgr/internal/config"
 	"github.com/bensallen/hkmgr/internal/console"
 	"github.com/bensallen/hkmgr/internal/destroy"
-	"github.com/bensallen/hkmgr/internal/down"
 	"github.com/bensallen/hkmgr/internal/ssh"
+	start "github.com/bensallen/hkmgr/internal/start"
 	"github.com/bensallen/hkmgr/internal/status"
-	"github.com/bensallen/hkmgr/internal/up"
+	stop "github.com/bensallen/hkmgr/internal/stop"
 	"github.com/integrii/flaggy"
 	"github.com/kr/pretty"
 )
@@ -20,8 +20,8 @@ import (
 var version = "unknown"
 
 func Run() error {
-	var upSubcommand *flaggy.Subcommand
-	var downSubcommand *flaggy.Subcommand
+	var startSubcommand *flaggy.Subcommand
+	var stopSubcommand *flaggy.Subcommand
 	var destroySubcommand *flaggy.Subcommand
 	var validateSubcommand *flaggy.Subcommand
 	var sshSubcommand *flaggy.Subcommand
@@ -42,15 +42,15 @@ func Run() error {
 	flaggy.Bool(&debug, "d", "debug", "Enable debug output")
 	flaggy.Bool(&dryRun, "n", "dry-run", "Don't execute any commands that affect change, just show what will be run")
 
-	upSubcommand = flaggy.NewSubcommand("up")
-	upSubcommand.Description = "Start VMs"
-	upSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be run")
+	startSubcommand = flaggy.NewSubcommand("start")
+	startSubcommand.Description = "Start VMs"
+	startSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be run")
 
-	downSubcommand = flaggy.NewSubcommand("down")
-	downSubcommand.Description = "Stop VMs"
-	var downSignal string
-	downSubcommand.String(&downSignal, "s", "signal", "Signal to send to VM")
-	downSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be stopped")
+	stopSubcommand = flaggy.NewSubcommand("stop")
+	stopSubcommand.Description = "Stop VMs"
+	var stopSignal string
+	stopSubcommand.String(&stopSignal, "s", "signal", "Signal to send to VM")
+	stopSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be stopped")
 
 	destroySubcommand = flaggy.NewSubcommand("destroy")
 	destroySubcommand.Description = "Destroy VMs"
@@ -72,8 +72,8 @@ func Run() error {
 	consoleSubcommand.Description = "Open Console of VM"
 	consoleSubcommand.AddPositionalValue(&vmName, "name", 1, true, "Specify a VM")
 
-	flaggy.AttachSubcommand(upSubcommand, 1)
-	flaggy.AttachSubcommand(downSubcommand, 1)
+	flaggy.AttachSubcommand(startSubcommand, 1)
+	flaggy.AttachSubcommand(stopSubcommand, 1)
 	//flaggy.AttachSubcommand(destroySubcommand, 1)
 	//flaggy.AttachSubcommand(validateSubcommand, 1)
 	flaggy.AttachSubcommand(statusSubcommand, 1)
@@ -113,12 +113,12 @@ func Run() error {
 	}
 
 	switch {
-	case upSubcommand.Used:
-		if err := up.Run(&config, vmName, debug, dryRun); err != nil {
+	case startSubcommand.Used:
+		if err := start.Run(&config, vmName, debug, dryRun); err != nil {
 			return err
 		}
-	case downSubcommand.Used:
-		if err := down.Run(&config, vmName, downSignal); err != nil {
+	case stopSubcommand.Used:
+		if err := stop.Run(&config, vmName, stopSignal); err != nil {
 			return err
 		}
 	case destroySubcommand.Used:
