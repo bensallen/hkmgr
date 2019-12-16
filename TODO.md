@@ -22,7 +22,11 @@
 - Add debug logging
 - Add cmd stdout/stderr to debug logging
 
-### Up
+### Network
+
+- Add VPNKit support
+
+### Start
 
 - Change permissions on tap and tty, then drop privs to run hyperkit
 - Automatically pick a unused tap interface if not specified
@@ -31,9 +35,8 @@
 
 - Generate a hkmgr.toml
 
-### Down
+### Stop
 
-- Change this to "stop"
 - Prompt when running without a specific VM, asking if all VMs should be stopped to avoid annoyances. Add -y flag to answer via CLI.
 
 ### Destroy
