@@ -16,7 +16,7 @@ import (
 
 var hyperkitPath = "hyperkit"
 
-// VMs
+// VM is the map of VM names to VMConfig
 type VM map[string]*VMConfig
 
 type VMConfig struct {
