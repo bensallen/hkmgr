@@ -3,7 +3,10 @@ workflows:
   version: 2
   build_and_test:
     jobs:
+      - setup
       - clean-code
+          requires:
+            - setup
       - test:
           requires:
             - clean-code
@@ -14,9 +17,24 @@ workflows:
           requires:
             - clean-code
 jobs:
+  setup:
+    macos:
+      xcode: 11.3.0
+    steps:
+      - run:
+        name: Configure environment
+        command: |
+          echo 'export GOPATH=${HOME}/go' >> $BASH_ENV
+          echo 'export PATH=${PATH}:${GOPATH}/bin' >> $BASH_ENV
+      - run:
+          name: Install Golang
+          command: brew install golang
+      - run:
+          name: Install revive
+          command: go get -u github.com/mgechev/revive
   clean-code:
-    docker:
-      - image: circleci/golang:latest
+    macos:
+      xcode: 11.3.0
     steps:
       - checkout
       - run:
@@ -30,15 +48,13 @@ jobs:
           command: go vet ./cmd/hkmgr ./internal/...
       - run:
           name: Run revive
-          command: |
-            go get -u github.com/mgechev/revive
-            test -z "$(revive -exclude=vendor/... ./... | grep -v 'should have comment or be unexported')"
+          command: test -z "$(revive -exclude=vendor/... ./... | grep -v 'should have comment or be unexported')"
       - run:
           name: gofmt
           command: test -z "$(gofmt -s -l cmd internal)"
   test:
-    docker:
-      - image: circleci/golang:latest
+    macos:
+      xcode: 11.3.0
     environment:
       - CGO_ENABLED: 0
     steps:
@@ -50,8 +66,8 @@ jobs:
           name: Test coverage
           command: go test -mod=vendor -cover ./...
   race:
-    docker:
-      - image: circleci/golang:latest
+    macos:
+      xcode: 11.3.0
     environment:
       - CGO_ENABLED: 1
     steps:
@@ -60,13 +76,12 @@ jobs:
           name: Race detector
           command: go test -mod=vendor -race ./...
   compile:
-    docker:
-      - image: circleci/golang:latest
+    macos:
+      xcode: 11.3.0
     environment:
       - CGO_ENABLED: 0
     steps:
       - checkout
       - run:
           name: build all tools
-          command: |
-            go build -mod=vendor -a -ldflags '-s' ./...
+          command: go build -mod=vendor -a -ldflags '-s' ./...
