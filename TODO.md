@@ -43,8 +43,6 @@
 
 ### Status
 
-- Add pid in status output
-
 ### SSH
 
 ### Console
@@ -79,3 +77,4 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - If one of the tap interfaces doesn't come up, still add the ones that do come up to the bridge
 - Make relative paths be relative to the config file.
 - Make relative paths in a VM config relative to the run_dir
+- Add pid in status output
