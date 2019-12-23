@@ -17,7 +17,7 @@ import (
 	"github.com/kr/pretty"
 )
 
-var version = "unknown"
+var Version = "unknown"
 
 func Run() error {
 	var upSubcommand *flaggy.Subcommand
@@ -82,7 +82,7 @@ func Run() error {
 	//flaggy.AttachSubcommand(sshSubcommand, 1)
 	//flaggy.AttachSubcommand(consoleSubcommand, 1)
 
-	flaggy.SetVersion(version)
+	flaggy.SetVersion(Version)
 	flaggy.Parse()
 
 	if dryRun {
