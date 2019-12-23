@@ -22,10 +22,13 @@ func (c *Config) UpdateRelativePaths() {
 }
 
 // Defaults sets default values for unset variables in the config.
-func (c *Config) Defaults() {
+func (c *Config) Defaults() error {
 	configDir := filepath.Dir(c.Path)
 
 	for name := range c.VM {
-		c.VM[name].defaults(configDir, name)
+		if err := c.VM[name].defaults(configDir, name); err != nil {
+			return err
+		}
 	}
+	return nil
 }
