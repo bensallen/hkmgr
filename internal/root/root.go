@@ -107,7 +107,9 @@ func Run() error {
 		return err
 	}
 
-	config.Defaults()
+	if err := config.Defaults(); err != nil {
+		return err
+	}
 	config.UpdateRelativePaths()
 
 	if debug {

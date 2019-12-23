@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/mitchellh/go-ps"
 )
 
@@ -188,6 +189,23 @@ func pidFile(path string) (int, error) {
 	return pid, nil
 }
 
+func uuidFile(path string) (uuid.UUID, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return [16]byte{}, fmt.Errorf("uuid file not found")
+	}
+	uuidTxt, err := ioutil.ReadFile(path)
+	if err != nil {
+		return [16]byte{}, fmt.Errorf("uuid file cannot be read")
+	}
+
+	uuid, err := uuid.Parse(string(uuidTxt))
+	if err != nil {
+		return [16]byte{}, fmt.Errorf("uuid file does not contain an UUID")
+	}
+
+	return uuid, nil
+}
+
 func (v *VMConfig) Cli() []string {
 
 	var args []string
@@ -266,10 +284,30 @@ func (v *VMConfig) Validate() error {
 	return nil
 }
 
-func (v *VMConfig) defaults(configDir string, name string) {
+func (v *VMConfig) defaults(configDir string, name string) error {
 	if v.RunDir == "" {
 		v.RunDir = filepath.Join(configDir, ".run/vm/", name)
 	}
+
+	if v.UUID == "" {
+		UUID, err := uuidFile(v.RunDir + "/uuid")
+
+		if err != nil {
+			UUID = uuid.New()
+			w, err := os.Create(v.RunDir + "/uuid")
+			if err != nil {
+				return err
+			}
+
+			defer w.Close()
+
+			if _, err := w.WriteString(UUID.String()); err != nil {
+				return err
+			}
+		}
+		v.UUID = UUID.String()
+	}
+	return nil
 }
 
 func (v *VMConfig) updateRelativePaths(configDir string, name string) {
