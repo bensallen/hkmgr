@@ -1,4 +1,4 @@
-package stop
+package down
 
 import (
 	"fmt"
