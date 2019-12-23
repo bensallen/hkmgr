@@ -44,10 +44,12 @@ func Run() error {
 
 	upSubcommand = flaggy.NewSubcommand("up")
 	upSubcommand.Description = "Start VMs"
+	upSubcommand.ShortName = "start"
 	upSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be run")
 
 	downSubcommand = flaggy.NewSubcommand("down")
 	downSubcommand.Description = "Stop VMs"
+	downSubcommand.ShortName = "stop"
 	var downSignal string
 	downSubcommand.String(&downSignal, "s", "signal", "Signal to send to VM")
 	downSubcommand.AddPositionalValue(&vmName, "name", 1, false, "Specify a VM, otherwise all VMs will be stopped")
