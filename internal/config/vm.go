@@ -34,6 +34,7 @@ type VMConfig struct {
 	Boot          Boot       `toml:"boot"`
 	HDD           []*HDD     `toml:"hdd"`
 	CDROM         []*CDROM   `toml:"cdrom"`
+	PID           int
 }
 
 // Status is the status of a VM process
@@ -107,6 +108,8 @@ func (v *VMConfig) Status() Status {
 		return NotFound
 	}
 
+	v.PID = pid
+
 	proc, err := ps.FindProcess(pid)
 	if err != nil {
 		return NotFound
@@ -114,7 +117,10 @@ func (v *VMConfig) Status() Status {
 	if proc == nil {
 		return Stopped
 	}
-	return Running
+	if proc.Executable() == "hyperkit" || proc.Executable() == "com.docker.hyper" {
+		return Running
+	}
+	return Stopped
 }
 
 // Kill attempts to kill a VM via the pid file with the specified signal.

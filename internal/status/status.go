@@ -11,7 +11,7 @@ import (
 func Current(cfg *config.Config, name string, debug bool) error {
 	if name != "" {
 		if vm, ok := cfg.VM[name]; ok {
-			fmt.Printf("%s status is %s\n", name, vm.Status())
+			fmt.Printf("%s status is %s, PID: %d\n", name, vm.Status(), vm.PID)
 		} else {
 			return fmt.Errorf("%s not found in the configuration", name)
 		}
@@ -23,7 +23,7 @@ func Current(cfg *config.Config, name string, debug bool) error {
 		sort.Strings(names)
 		for _, n := range names {
 			vm := cfg.VM[n]
-			fmt.Printf("%s status is %s\n", n, vm.Status())
+			fmt.Printf("%s status is %s, PID: %d\n", n, vm.Status(), vm.PID)
 		}
 	}
 	return nil
