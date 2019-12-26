@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -172,40 +171,6 @@ func sigLookup(s string) (syscall.Signal, error) {
 	return sig, nil
 }
 
-func pidFile(path string) (int, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return 0, fmt.Errorf("pid file not found")
-	}
-	pidTxt, err := ioutil.ReadFile(path)
-	if err != nil {
-		return 0, fmt.Errorf("pid file cannot be read")
-	}
-
-	pid, err := strconv.Atoi(string(pidTxt))
-	if err != nil {
-		return 0, fmt.Errorf("pid file does not contain an integer")
-	}
-
-	return pid, nil
-}
-
-func uuidFile(path string) (uuid.UUID, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return [16]byte{}, fmt.Errorf("uuid file not found")
-	}
-	uuidTxt, err := ioutil.ReadFile(path)
-	if err != nil {
-		return [16]byte{}, fmt.Errorf("uuid file cannot be read")
-	}
-
-	uuid, err := uuid.Parse(string(uuidTxt))
-	if err != nil {
-		return [16]byte{}, fmt.Errorf("uuid file does not contain an UUID")
-	}
-
-	return uuid, nil
-}
-
 func (v *VMConfig) Cli() []string {
 
 	var args []string
@@ -307,6 +272,13 @@ func (v *VMConfig) defaults(configDir string, name string) error {
 		}
 		v.UUID = UUID.String()
 	}
+
+	for _, net := range v.Network {
+		if err := net.defaults(v.RunDir); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -490,6 +462,36 @@ func (n *NetConf) validate() error {
 
 	default:
 		return fmt.Errorf("network driver %s not supported: drivers virtio-tap, virtio-net, and virtio-vpnkit are supported", n.Driver)
+	}
+	return nil
+}
+
+func (n *NetConf) defaults(runDir string) error {
+	switch n.Driver {
+
+	case "virtio-tap":
+		if n.MAC == "" {
+			MAC, err := hwaddrFile(runDir + "/" + n.MemberOf + "_mac")
+
+			if err != nil {
+				MAC, err = genMAC()
+				if err != nil {
+					return err
+				}
+
+				w, err := os.Create(runDir + "/" + n.MemberOf + "_mac")
+				if err != nil {
+					return err
+				}
+
+				defer w.Close()
+
+				if _, err := w.WriteString(MAC.String()); err != nil {
+					return err
+				}
+			}
+			n.MAC = MAC.String()
+		}
 	}
 	return nil
 }

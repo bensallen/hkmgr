@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rand"
 	"fmt"
 	"net"
 	"strings"
@@ -128,4 +129,20 @@ func (v *VPNKit) Up() error {
 
 func (v *VPNKit) Destroy() error {
 	return nil
+}
+
+// genMAC creates a random 6 byte hardware address, eg. MAC address.
+// The address generated has the locally administered bit set and
+// is a unicast address.
+func genMAC() (net.HardwareAddr, error) {
+	buf := make([]byte, 6)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set local bit, ensure unicast address
+	buf[0] = (buf[0] | 2) & 0xfe
+
+	return buf, nil
 }
