@@ -8,7 +8,6 @@
 
 - Reorganize internal/config to move VM action logic outside of config, eg. vm/vm.go
 - Generate HDD if it doesn't already exist
-- Generate MAC for tap interfaces if not specified, store in .run/vm/\<name\>/\<net\>_mac
 - Check write privs on run_dir, pid, and tty in Validate()
 - Check write privs on hdd, read privs on cdrom
 - Add template support for kexec cmdline for IP, ssh public
@@ -62,7 +61,6 @@ Configuring Network: "net0"
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 
-
 ## Completed
 
 - Add arg to each relevant command to work on specific VM
@@ -78,3 +76,4 @@ cmd: ifconfig bridge1 192.168.99.1 netmask 0xffffff00
 - Add pid in status output
 - Add CI, CircleCI, clean code, etc.
 - Generate UUID if not specified, store in .run/vm/\<name\>/uuid
+- Generate MAC for tap interfaces if not specified, store in .run/vm/\<name\>/\<net\>_mac
