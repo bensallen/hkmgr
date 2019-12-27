@@ -1,0 +1,61 @@
+on: pull_request
+name: macos latest
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: macos-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v1
+  clean-code:
+    name: Clean Code
+    runs-on: macos-latest
+    needs:
+      - setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Verify modules
+        run: go mod verify
+      - name: Modules graph
+        run: go mod graph
+      - name: Run go vet
+        run: go vet ./cmd/hkmgr ./internal/...
+      - name: Run go fmt
+        run: test -z "$(gofmt -s -l cmd internal)"
+  test:
+    name: Test
+    runs-on: macos-latest
+    env:
+      CGO_ENABLED: 0
+    needs:
+      - setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Test all
+        run: go test -mod=vendor -a -ldflags '-s' ./...
+      - name: Test coverage
+        run: go test -mod=vendor -cover ./...
+  race:
+    name: Race
+    runs-on: macos-latest
+    needs:
+      - setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Race detector
+        run: go test -mod=vendor -race ./...
+  compile:
+    name: Compile
+    runs-on: macos-latest
+    env:
+      CGO_ENABLED: 0
+    needs:
+      - setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Build all tools
+        run: go build -mod=vendor -a -ldflags '-s' ./...
