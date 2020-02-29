@@ -190,7 +190,7 @@ func (v *VMConfig) Cli() []string {
 	args = append(args, "-A", "-s", "0:0,hostbridge", "-s", "31,lpc", "-s", "1,virtio-rnd")
 
 	if v.RunDir != "" {
-		args = append(args, "-l", fmt.Sprintf("com1,autopty=%s/tty,asl", v.RunDir))
+		args = append(args, "-l", fmt.Sprintf("com1,autopty=%s/tty,log=%s/log", v.RunDir, v.RunDir))
 	}
 
 	for i, net := range v.Network {
