@@ -190,7 +190,7 @@ func (v *VMConfig) Cli() []string {
 	args = append(args, "-A", "-s", "0:0,hostbridge", "-s", "31,lpc", "-s", "1,virtio-rnd")
 
 	if v.RunDir != "" {
-		args = append(args, "-l", fmt.Sprintf("com1,autopty=%s/tty,log=%s/log", v.RunDir, v.RunDir))
+		args = append(args, "-l", fmt.Sprintf("com1,autopty=%s/tty,log=%s/console.log", v.RunDir, v.RunDir))
 	}
 
 	for i, net := range v.Network {
@@ -202,7 +202,12 @@ func (v *VMConfig) Cli() []string {
 	}
 
 	for i, hdd := range v.HDD {
-		args = append(args, "-s", fmt.Sprintf("3:%d,%s,file://%s,format=%s", i, hdd.Driver, hdd.Path, hdd.Format))
+		switch hdd.Format {
+		case "qcow":
+			args = append(args, "-s", fmt.Sprintf("3:%d,%s,file://%s,format=qcow", i, hdd.Driver, hdd.Path))
+		case "raw", "dev", "":
+			args = append(args, "-s", fmt.Sprintf("3:%d,%s,%s", i, hdd.Driver, hdd.Path))
+		}
 	}
 
 	for i, cd := range v.CDROM {
