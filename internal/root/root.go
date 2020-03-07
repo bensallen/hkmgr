@@ -17,8 +17,10 @@ import (
 	"github.com/kr/pretty"
 )
 
+// Version is the CLI version or release number. To be overriden at build time.
 var Version = "unknown"
 
+// Run hkmgr
 func Run() error {
 	var upSubcommand *flaggy.Subcommand
 	var downSubcommand *flaggy.Subcommand
@@ -28,7 +30,8 @@ func Run() error {
 	var statusSubcommand *flaggy.Subcommand
 	var consoleSubcommand *flaggy.Subcommand
 
-	configPath := "hkmgr.toml"
+	//
+	var cliConfigPaths []string
 	var debug bool
 	var dryRun bool
 	var vmName string
@@ -37,8 +40,8 @@ func Run() error {
 	flaggy.SetDescription("VM manager for hyperkit")
 
 	flaggy.DefaultParser.AdditionalHelpPrepend = "http://github.com/bensallen/hkmgr"
+	flaggy.StringSlice(&cliConfigPaths, "c", "config", "Path to configuration TOML file or directory of TOML files")
 
-	flaggy.String(&configPath, "c", "config", "Path to configuration TOML file")
 	flaggy.Bool(&debug, "d", "debug", "Enable debug output")
 	flaggy.Bool(&dryRun, "n", "dry-run", "Don't execute any commands that affect change, just show what will be run")
 
@@ -89,23 +92,57 @@ func Run() error {
 		debug = true
 	}
 
-	cfgStat, err := os.Stat(configPath)
-
-	if os.IsNotExist(err) {
-		return fmt.Errorf("configuration file %s not found", configPath)
+	// Default to look for configs hkmgr.toml and hkmgr.d/*.toml
+	if len(cliConfigPaths) == 0 {
+		cliConfigPaths = []string{"hkmgr.toml", "hkmgr.d"}
 	}
-	if cfgStat.IsDir() {
-		return fmt.Errorf("configuration file %s is a directory", configPath)
+
+	cfgPaths := []string{}
+	var firstCfgPath string
+	for _, cliConfigPath := range cliConfigPaths {
+		cfgStat, err := os.Stat(cliConfigPath)
+
+		if os.IsNotExist(err) {
+			continue
+		}
+		if cfgStat.IsDir() {
+			globPaths, err := filepath.Glob(cliConfigPath + "/*.toml")
+
+			if err != nil {
+				fmt.Printf("configuration path %s is a directory and failed with %v", cliConfigPath, err)
+				continue
+			}
+
+			if len(globPaths) == 0 {
+				continue
+			}
+			cfgPaths = append(cfgPaths, globPaths...)
+		} else {
+			cfgPaths = append(cfgPaths, cliConfigPath)
+		}
+		// Record the first valid path so that it can be used to resolve relative paths
+		if firstCfgPath == "" {
+			firstCfgPath = cliConfigPath
+		}
+	}
+	fmt.Printf("%#v\n", cfgPaths)
+
+	if len(cfgPaths) == 0 {
+		return fmt.Errorf("no configuration files found")
 	}
 
 	var config config.Config
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
-		return err
+	for _, cfgPath := range cfgPaths {
+		if _, err := toml.DecodeFile(cfgPath, &config); err != nil {
+			return err
+		}
 	}
 
-	if config.Path, err = filepath.Abs(configPath); err != nil {
+	absPath, err := filepath.Abs(firstCfgPath)
+	if err != nil {
 		return err
 	}
+	config.Path = absPath
 
 	if err := config.Defaults(); err != nil {
 		return err
