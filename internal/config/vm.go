@@ -259,6 +259,13 @@ func (v *VMConfig) defaults(configDir string, name string) error {
 		v.RunDir = filepath.Join(configDir, ".run/vm/", name)
 	}
 
+	if !dirExists(v.RunDir) {
+		err := os.MkdirAll(v.RunDir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
 	if v.UUID == "" {
 		UUID, err := uuidFile(v.RunDir + "/uuid")
 
@@ -538,11 +545,20 @@ func (c *CDROM) updateRelativePaths(runDir string) {
 	}
 }
 
-// Check if a file exists and isn't a directory
+// Check if a path exists and isn't a directory
 func fileExists(filename string) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
 		return false
 	}
 	return !info.IsDir()
+}
+
+// Check if a path exists and is a directory
+func dirExists(dirname string) bool {
+	info, err := os.Stat(dirname)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
 }

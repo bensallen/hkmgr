@@ -125,7 +125,6 @@ func Run() error {
 			firstCfgPath = cliConfigPath
 		}
 	}
-	fmt.Printf("%#v\n", cfgPaths)
 
 	if len(cfgPaths) == 0 {
 		return fmt.Errorf("no configuration files found")
